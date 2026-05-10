@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}{{ origin }} → {{ destination }} · {{ outbound }} · FlightTracker{% endblock %}
+
+{% block content %}
+<div class="hero py-3">
+  <div class="container">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div>
+        <h2 class="fw-bold mb-0">
+          <i class="fas fa-plane me-2"></i>{{ origin }} → {{ destination }}
+        </h2>
+        <p class="mb-0 opacity-75">
+          {{ outbound }}{% if return_d %} &mdash; {{ return_d }}{% endif %}
+          &nbsp;&middot;&nbsp;
+          {% if trip_type == "1" %}Round trip{% else %}One way{% endif %}
+          &nbsp;&middot;&nbsp;
+          <strong>{{ count }}</strong> flight{{ 's' if count != 1 else '' }} found
+          {% if airline %}&nbsp;&middot;&nbsp;{{ airline }}{% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container mt-4">
+  <a href="/" class="btn btn-outline-secondary btn-sm mb-4">
+    <i class="fas fa-arrow-left me-1"></i>New search
+  </a>
+
+  {% if flights %}
+    {% for f in flights %}
+    <div class="card flight-card mb-3">
+      <div class="card-body p-4">
+        <div class="row align-items-center gy-3">
+
+          <!-- Airline logo + name -->
+          <div class="col-6 col-md-2 text-center">
+            {% if f.airline_logo %}
+            <img src="{{ f.airline_logo }}" alt="{{ f.airline }}"
+                 style="max-height:44px;max-width:90px;object-fit:contain;">
+            {% endif %}
+            <div class="small text-muted mt-1 fw-semibold">{{ f.airline }}</div>
+            <div class="small text-muted" style="font-size:.75rem">{{ f.flight_numbers }}</div>
+          </div>
+
+          <!-- Flight legs -->
+          <div class="col-12 col-md-7">
+            {% for leg in f.legs %}
+            <div class="d-flex align-items-center gap-3 {% if not loop.last %}mb-3{% endif %}">
+
+              <!-- Departure -->
+              <div class="text-center" style="min-width:68px">
+                <div class="time-large">{{ leg.dep_time }}</div>
+                <div class="apt-code">{{ leg.dep_id }}</div>
+                <div class="text-muted" style="font-size:.7rem">{{ leg.dep_airport[:20] }}</div>
+              </div>
+
+              <!-- Middle: duration + stop badge -->
+              <div class="flex-grow-1 text-center px-1">
+                <div class="small text-muted mb-1">{{ leg.duration | dur }}</div>
+                <div class="route-row">
+                  <hr>
+                  {% if f.is_nonstop %}
+                  <span class="badge bg-success text-nowrap">Nonstop</span>
+                  {% else %}
+                  <span class="badge bg-warning text-dark text-nowrap">
+                    {{ f.layovers | length }} stop{{ 's' if f.layovers|length != 1 }}
+                  </span>
+                  {% endif %}
+                  <hr>
+                </div>
+              </div>
+
+              <!-- Arrival -->
+              <div class="text-center" style="min-width:68px">
+                <div class="time-large">{{ leg.arr_time }}</div>
+                <div class="apt-code">{{ leg.arr_id }}</div>
+                <div class="text-muted" style="font-size:.7rem">{{ leg.arr_airport[:20] }}</div>
+              </div>
+
+            </div>
+            {% if not loop.last %}
+            <hr class="my-2 border-dashed">
+            {% endif %}
+            {% endfor %}
+
+            {% if f.legs | length > 1 %}
+            <div class="small text-muted mt-2">
+              <i class="fas fa-clock me-1"></i>Total travel time: {{ f.total_duration | dur }}
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Price + Track button -->
+          <div class="col-6 col-md-3 text-center">
+            <div class="price-tag {% if f.price < threshold %}deal{% endif %}">
+              ${{ "%.0f" | format(f.price) }}
+            </div>
+            <div class="small text-muted mb-2">per person · round trip</div>
+
+            {% if f.price < threshold %}
+            <div class="badge bg-success mb-2 px-3 py-1">
+              <i class="fas fa-tag me-1"></i>Great deal!
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/track">
+              <input type="hidden" name="departure_date"  value="{{ outbound }}">
+              <input type="hidden" name="return_date"     value="{{ return_d }}">
+              <input type="hidden" name="price"           value="{{ f.price }}">
+              <input type="hidden" name="airline"         value="{{ f.airline }}">
+              <input type="hidden" name="flight_number"   value="{{ f.flight_numbers }}">
+              <input type="hidden" name="origin"          value="{{ origin }}">
+              <input type="hidden" name="destination"     value="{{ destination }}">
+              <button type="submit" class="btn btn-navy btn-sm w-100 mt-1">
+                <i class="fas fa-bookmark me-1"></i>Track this price
+              </button>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+  {% else %}
+  <div class="card card-clean text-center py-5 px-3">
+    <i class="fas fa-plane-slash fa-3x text-muted mb-3"></i>
+    <h4 class="text-muted">No flights found</h4>
+    <p class="text-muted mb-4">
+      Try different dates, removing the airline filter, or allowing more stops.
+    </p>
+    <a href="/" class="btn btn-primary">Search again</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

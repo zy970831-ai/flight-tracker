@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% block title %}FlightTracker — Search Flights{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <div class="container text-center">
+    <h1 class="fw-bold mb-1"><i class="fas fa-plane-departure me-2"></i>Find Your Flight</h1>
+    <p class="mb-0 opacity-75">Search any route &middot; Track prices &middot; Get alerts when prices drop</p>
+  </div>
+</div>
+
+<div class="container" style="margin-top: -1.5rem;">
+  <div class="card card-clean p-4 mb-4">
+    <form method="POST" action="/search" id="searchForm">
+
+      <!-- Trip type -->
+      <div class="d-flex gap-4 mb-3">
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="trip_type" id="rt" value="1" checked>
+          <label class="form-check-label fw-semibold" for="rt">Round trip</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="trip_type" id="ow" value="2">
+          <label class="form-check-label fw-semibold" for="ow">One way</label>
+        </div>
+      </div>
+
+      <div class="row g-3 align-items-end">
+        <!-- Origin -->
+        <div class="col-6 col-md-2">
+          <label class="form-label fw-semibold small text-uppercase text-muted">From</label>
+          <input type="text" class="form-control form-control-lg text-center fw-bold fs-5"
+                 name="origin" id="origin" value="IAD" maxlength="3"
+                 style="text-transform:uppercase;letter-spacing:3px" required>
+        </div>
+
+        <!-- Swap button -->
+        <div class="col-12 col-md-1 text-center pb-1">
+          <button type="button" class="btn btn-outline-secondary rounded-circle" id="swapBtn"
+                  title="Swap airports" style="width:38px;height:38px;padding:0">
+            <i class="fas fa-right-left fa-sm"></i>
+          </button>
+        </div>
+
+        <!-- Destination -->
+        <div class="col-6 col-md-2">
+          <label class="form-label fw-semibold small text-uppercase text-muted">To</label>
+          <input type="text" class="form-control form-control-lg text-center fw-bold fs-5"
+                 name="destination" id="destination" value="STT" maxlength="3"
+                 style="text-transform:uppercase;letter-spacing:3px" required>
+        </div>
+
+        <!-- Departure -->
+        <div class="col-6 col-md-3">
+          <label class="form-label fw-semibold small text-uppercase text-muted">Departure</label>
+          <input type="date" class="form-control form-control-lg" name="outbound_date"
+                 id="outboundDate" min="{{ today }}" required>
+        </div>
+
+        <!-- Return -->
+        <div class="col-6 col-md-3" id="returnField">
+          <label class="form-label fw-semibold small text-uppercase text-muted">Return</label>
+          <input type="date" class="form-control form-control-lg" name="return_date"
+                 id="returnDate" min="{{ today }}">
+        </div>
+
+        <!-- Search button -->
+        <div class="col-12 col-md-1">
+          <button type="submit" class="btn btn-primary btn-lg w-100">
+            <i class="fas fa-search"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Advanced filters -->
+      <div class="mt-3 pt-2 border-top">
+        <a class="text-decoration-none text-muted small fw-semibold"
+           data-bs-toggle="collapse" href="#advanced" role="button">
+          <i class="fas fa-sliders me-1"></i>Advanced filters
+          <i class="fas fa-chevron-down ms-1 fa-xs"></i>
+        </a>
+        <div class="collapse mt-3" id="advanced">
+          <div class="row g-3">
+            <div class="col-md-3">
+              <label class="form-label fw-semibold small">Stops</label>
+              <select class="form-select" name="stops">
+                <option value="0">Any number of stops</option>
+                <option value="1">Nonstop only</option>
+                <option value="2">1 stop or fewer</option>
+                <option value="3">2 stops or fewer</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold small">Airline (optional)</label>
+              <input type="text" class="form-control" name="airline"
+                     placeholder="e.g. United, Delta, AA">
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </form>
+  </div>
+
+  <!-- Quick links -->
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card card-clean text-center p-4 h-100">
+        <i class="fas fa-bolt fa-2x text-warning mb-2"></i>
+        <h6 class="fw-bold mb-1">Quick Search</h6>
+        <p class="small text-muted mb-3">IAD → STT · nonstop · United<br>Next Saturday → Wednesday</p>
+        <button class="btn btn-sm btn-outline-primary mt-auto" id="quickBtn">Try it</button>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-clean text-center p-4 h-100">
+        <i class="fas fa-bookmark fa-2x text-primary mb-2"></i>
+        <h6 class="fw-bold mb-1">Tracked Prices</h6>
+        <p class="small text-muted mb-3">View and manage all your saved flight prices over time.</p>
+        <a href="/tracked" class="btn btn-sm btn-outline-primary mt-auto">View Tracked</a>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card card-clean text-center p-4 h-100">
+        <i class="fas fa-bell fa-2x text-danger mb-2"></i>
+        <h6 class="fw-bold mb-1">Price Alerts</h6>
+        <p class="small text-muted mb-3">Get emailed automatically when a price drops below your threshold.</p>
+        <a href="/alerts" class="btn btn-sm btn-outline-primary mt-auto">Set Alert</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Show/hide return date field
+document.querySelectorAll('input[name="trip_type"]').forEach(r => {
+  r.addEventListener('change', function () {
+    document.getElementById('returnField').style.display = this.value === '1' ? '' : 'none';
+  });
+});
+
+// Keep return date >= departure date
+document.getElementById('outboundDate').addEventListener('change', function () {
+  const rd = document.getElementById('returnDate');
+  if (rd.value && rd.value < this.value) rd.value = this.value;
+  rd.min = this.value;
+});
+
+// Swap origin ↔ destination
+document.getElementById('swapBtn').addEventListener('click', function () {
+  const o = document.getElementById('origin');
+  const d = document.getElementById('destination');
+  [o.value, d.value] = [d.value, o.value];
+});
+
+// Force uppercase airport codes
+['origin','destination'].forEach(id => {
+  document.getElementById(id).addEventListener('input', function () {
+    this.value = this.value.toUpperCase();
+  });
+});
+
+// Quick Search: fill IAD→STT, next Sat→Wed, nonstop, United
+document.getElementById('quickBtn').addEventListener('click', function () {
+  const today = new Date();
+  const daysUntilSat = (6 - today.getDay() + 7) % 7 || 7;
+  const sat = new Date(today); sat.setDate(today.getDate() + daysUntilSat);
+  const wed = new Date(sat);   wed.setDate(sat.getDate() + 4);
+  const fmt = d => d.toISOString().split('T')[0];
+
+  document.getElementById('origin').value      = 'IAD';
+  document.getElementById('destination').value = 'STT';
+  document.getElementById('outboundDate').value = fmt(sat);
+  document.getElementById('returnDate').value   = fmt(wed);
+  document.querySelector('[name="trip_type"][value="1"]').checked = true;
+  document.getElementById('returnField').style.display = '';
+
+  const adv = document.getElementById('advanced');
+  if (!adv.classList.contains('show')) new bootstrap.Collapse(adv).show();
+  document.querySelector('[name="stops"]').value   = '1';
+  document.querySelector('[name="airline"]').value = 'United';
+});
+</script>
+{% endblock %}

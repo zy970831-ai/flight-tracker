@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}FlightTracker{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+  <style>
+    :root { --navy: #0f2244; --accent: #1d6fa4; }
+    body  { background: #f0f4f8; min-height: 100vh; font-family: 'Segoe UI', system-ui, sans-serif; }
+
+    /* Navbar */
+    .navbar              { background: var(--navy) !important; }
+    .navbar-brand        { font-weight: 800; letter-spacing: 1px; font-size: 1.2rem; }
+    .nav-link            { color: rgba(255,255,255,.75) !important; }
+    .nav-link:hover,
+    .nav-link.active     { color: #fff !important; }
+
+    /* Hero banner */
+    .hero {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--accent) 100%);
+      color: white;
+      padding: 2.5rem 0 2rem;
+    }
+
+    /* Cards */
+    .card-clean {
+      border: none;
+      border-radius: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,.08);
+    }
+    .flight-card {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+      transition: transform .15s, box-shadow .15s;
+    }
+    .flight-card:hover { transform: translateY(-2px); box-shadow: 0 6px 22px rgba(0,0,0,.12); }
+
+    /* Price */
+    .price-tag        { font-size: 2rem; font-weight: 900; color: var(--navy); }
+    .price-tag.deal   { color: #198754; }
+
+    /* Route line */
+    .route-row        { display: flex; align-items: center; gap: 10px; }
+    .route-row hr     { flex: 1; border-top: 2px dashed #bbb; margin: 0; }
+    .time-large       { font-size: 1.35rem; font-weight: 700; line-height: 1.1; }
+    .apt-code         { font-size: .75rem; color: #888; font-weight: 600; letter-spacing: .5px; }
+
+    /* Buttons */
+    .btn-navy         { background: var(--navy); color: #fff; border: none; }
+    .btn-navy:hover   { background: var(--accent); color: #fff; }
+
+    /* Footer */
+    footer { background: var(--navy); color: #8899aa; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-dark navbar-expand-md sticky-top shadow-sm">
+  <div class="container">
+    <a class="navbar-brand" href="/"><i class="fas fa-plane-departure me-2"></i>FlightTracker</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto gap-1">
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'index' %}active fw-bold{% endif %}" href="/">
+            <i class="fas fa-search me-1"></i>Search
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'tracked' %}active fw-bold{% endif %}" href="/tracked">
+            <i class="fas fa-bookmark me-1"></i>Tracked
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'alerts' %}active fw-bold{% endif %}" href="/alerts">
+            <i class="fas fa-bell me-1"></i>Alerts
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+<div class="container mt-3">
+  {% for cat, msg in messages %}
+  <div class="alert alert-{{ cat }} alert-dismissible fade show shadow-sm">
+    {{ msg }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endwith %}
+
+{% block content %}{% endblock %}
+
+<footer class="py-4 mt-5">
+  <div class="container text-center small">
+    <i class="fas fa-plane me-1"></i> FlightTracker &mdash; powered by SerpApi Google Flights
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

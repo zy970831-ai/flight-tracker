@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Tracked Prices · FlightTracker{% endblock %}
+
+{% block content %}
+<div class="hero py-3">
+  <div class="container">
+    <h2 class="fw-bold mb-0"><i class="fas fa-bookmark me-2"></i>Tracked Prices</h2>
+    <p class="mb-0 opacity-75">
+      {{ rows | length }} saved entr{{ 'ies' if rows|length != 1 else 'y' }}
+      &nbsp;&middot;&nbsp; prices below ${{ threshold }} highlighted in green
+    </p>
+  </div>
+</div>
+
+<div class="container mt-4">
+
+  {% if rows %}
+  <!-- Stats row -->
+  {% set prices = rows | map(attribute='price') | list %}
+  {% set min_p  = prices | min %}
+  {% set max_p  = prices | max %}
+  {% set deals  = rows | selectattr('price', 'lt', threshold) | list %}
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card card-clean text-center p-3">
+        <div class="fs-3 fw-bold text-success">${{ "%.0f" | format(min_p) }}</div>
+        <div class="small text-muted">Lowest saved price</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card card-clean text-center p-3">
+        <div class="fs-3 fw-bold text-danger">${{ "%.0f" | format(max_p) }}</div>
+        <div class="small text-muted">Highest saved price</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card card-clean text-center p-3">
+        <div class="fs-3 fw-bold text-primary">{{ deals | length }}</div>
+        <div class="small text-muted">Deals under ${{ threshold }}</div>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card card-clean text-center p-3">
+        <div class="fs-3 fw-bold">{{ rows | length }}</div>
+        <div class="small text-muted">Total entries</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card card-clean">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead style="background:#0f2244;color:white;">
+          <tr>
+            <th class="ps-4">Route</th>
+            <th>Departure</th>
+            <th>Return</th>
+            <th>Price</th>
+            <th>Airline</th>
+            <th>Flight #</th>
+            <th>Saved At</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rows %}
+          <tr {% if r.price < threshold %}class="table-success"{% endif %}>
+            <td class="ps-4 fw-bold">
+              <span class="badge bg-secondary">{{ r.origin }}</span>
+              <i class="fas fa-arrow-right mx-1 fa-xs text-muted"></i>
+              <span class="badge bg-secondary">{{ r.destination }}</span>
+            </td>
+            <td>{{ r.departure_date }}</td>
+            <td>{{ r.return_date if r.return_date else '—' }}</td>
+            <td>
+              <span class="fw-bold {% if r.price < threshold %}text-success{% endif %} fs-6">
+                ${{ "%.2f" | format(r.price) }}
+              </span>
+              {% if r.price < threshold %}
+              <span class="badge bg-success ms-1">Deal</span>
+              {% endif %}
+            </td>
+            <td>{{ r.airline }}</td>
+            <td class="text-muted small">{{ r.flight_number or '—' }}</td>
+            <td class="text-muted small">{{ r.scraped_at[:16] }}</td>
+            <td class="pe-3">
+              <form method="POST" action="/tracked/delete/{{ r.id }}"
+                    onsubmit="return confirm('Remove this entry?')">
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                  <i class="fas fa-trash-alt"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="card card-clean text-center py-5 px-3">
+    <i class="fas fa-bookmark fa-3x text-muted mb-3"></i>
+    <h4 class="text-muted">No tracked prices yet</h4>
+    <p class="text-muted mb-4">Search for flights and click <strong>"Track this price"</strong> to save them here.</p>
+    <a href="/" class="btn btn-primary">Search Flights</a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
