@@ -86,8 +86,13 @@ def search_flights(origin, destination, outbound_date,
     return resp.json()
 
 
-def parse_flights(data, airline_filter=""):
+def parse_flights(data, airline_filter="", trip_type="1"):
     results = []
+    # SerpApi only returns the outbound leg in 'flights' for round-trip searches.
+    # Nonstop = exactly 1 leg shown + no layovers.
+    # The stops=1 API parameter enforces nonstop on both outbound and return.
+    expected_nonstop_legs = 1
+
     for section in ("best_flights", "other_flights"):
         for itin in data.get(section, []):
             legs  = itin.get("flights", [])
@@ -122,12 +127,14 @@ def parse_flights(data, airline_filter=""):
                 })
 
             layovers = itin.get("layovers", [])
+            # True nonstop: no layovers AND leg count matches expected
+            is_nonstop = (len(layovers) == 0 and len(legs) == expected_nonstop_legs)
             results.append({
                 "price":          price,
                 "total_duration": itin.get("total_duration", 0),
                 "legs":           parsed_legs,
                 "layovers":       layovers,
-                "is_nonstop":     len(layovers) == 0,
+                "is_nonstop":     is_nonstop,
                 "airline":        parsed_legs[0]["airline"],
                 "airline_logo":   parsed_legs[0]["airline_logo"],
                 "flight_numbers": " / ".join(
@@ -191,7 +198,7 @@ def search():
         data    = search_flights(origin, destination, outbound,
                                  return_d if trip_type == "1" else None,
                                  trip_type, stops)
-        flights = parse_flights(data, airline)
+        flights = parse_flights(data, airline, trip_type)
         threshold = active_threshold()
 
         return render_template("results.html",

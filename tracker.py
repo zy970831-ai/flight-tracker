@@ -154,9 +154,10 @@ def parse_best_united_nonstop(data: dict) -> Optional[Tuple[float, str, str]]:
         for itinerary in data.get(section, []):
             legs = itinerary.get("flights", [])
 
-            # Nonstop = single leg each way; the API 'stops=1' already filters,
-            # but we double-check layovers are absent.
-            if itinerary.get("layovers"):
+            # SerpApi returns only the outbound leg for round-trip searches.
+            # Nonstop outbound = exactly 1 leg, no layovers.
+            # The stops=1 API parameter enforces nonstop on both directions.
+            if len(legs) != 1 or itinerary.get("layovers"):
                 continue
 
             # All legs must be operated by United
